@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dino Jump</title>
+  <style>
+    body {
+      background: #111;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      background: #000;
+      margin-top: 40px;
+      border: 2px solid #fff;
+    }
+    a {
+      color: #0f0;
+      margin-top: 20px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🦖 Dino Jump</h1>
+  <canvas id="game" width="600" height="200"></canvas>
+  <a href="index.html">⬅ Back to Menu</a>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const dino = {
+      x: 50,
+      y: 160,
+      width: 20,
+      height: 40,
+      velocityY: 0,
+      jumpForce: 10,
+      gravity: 0.5,
+      grounded: true
+    };
+
+    let obstacles = [];
+    let frame = 0;
+    let gameOver = false;
+    let score = 0;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && dino.grounded) {
+        dino.velocityY = -dino.jumpForce;
+        dino.grounded = false;
+      }
+    });
+
+    function createObstacle() {
+      const count = Math.floor(Math.random() * 3) + 1; // 1 to 3 obstacles
+      for (let i = 0; i < count; i++) {
+        let height = Math.floor(Math.random() * 30) + 20;
+        obstacles.push({
+          x: canvas.width + i * 30,
+          y: canvas.height - height,
+          width: 15 + Math.floor(Math.random() * 10),
+          height: height,
+          speed: 6
+        });
+      }
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Gravity
+      dino.velocityY += dino.gravity;
+      dino.y += dino.velocityY;
+
+      // Ground check
+      if (dino.y >= 160) {
+        dino.y = 160;
+        dino.velocityY = 0;
+        dino.grounded = true;
+      }
+
+      // Dino
+      ctx.fillStyle = "#00ffff";
+      ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+
+      // Spawn new obstacles
+      if (frame % 100 === 0) {
+        createObstacle();
+      }
+
+      // Move and draw obstacles
+      ctx.fillStyle = "#ff69b4";
+      for (let i = 0; i < obstacles.length; i++) {
+        const obs = obstacles[i];
+        obs.x -= obs.speed;
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Collision
+        if (
+          dino.x < obs.x + obs.width &&
+          dino.x + dino.width > obs.x &&
+          dino.y < obs.y + obs.height &&
+          dino.y + dino.height > obs.y
+        ) {
+          gameOver = true;
+          alert("Game Over! Score: " + score);
+          return;
+        }
+      }
+
+      // Remove off-screen obstacles and update score
+      obstacles = obstacles.filter(o => {
+        if (o.x + o.width < 0) {
+          score++;
+          return false;
+        }
+        return true;
+      });
+
+      // Draw score
+      ctx.fillStyle = "white";
+      ctx.font = "16px Arial";
+      ctx.fillText("Score: " + score, 10, 20);
+
+      frame++;
+      requestAnimationFrame(update);
+    }
+
+    update();
+  </script>
+</body>
+</html>
